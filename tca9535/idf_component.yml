@@ -1,4 +1,4 @@
-version: 0.1.0
+version: 0.2.0
 description: TCA9535 I2C GPIO expander component for ESP-IDF
 maintainers:
   - Jacques Supcik <jacques@supcik.net>

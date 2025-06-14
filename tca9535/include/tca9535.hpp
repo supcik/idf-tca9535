@@ -19,13 +19,7 @@
 
 class TCA9535 {
    public:
-    TCA9535(i2c_master_dev_handle_t handle);
-
-    static esp_err_t NewI2cHandle(i2c_port_num_t i2c_port,
-                                  gpio_num_t sda,
-                                  gpio_num_t scl,
-                                  uint16_t dev_addr,
-                                  i2c_master_dev_handle_t* dev_handle);
+    TCA9535(i2c_master_bus_handle_t bus_handle, uint16_t dev_addr);
 
     esp_err_t SetDirection(uint16_t direction);
     esp_err_t SetPolarityInversion(uint16_t polarity);

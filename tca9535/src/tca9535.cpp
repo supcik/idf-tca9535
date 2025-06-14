@@ -22,36 +22,13 @@
 static const char* kTag = "TCA9535";
 static const int kI2CtimeoutMs = 100;
 
-TCA9535::TCA9535(i2c_master_dev_handle_t handle) {
-    handle_ = handle;
-    value_ = 0;
-}
-
-esp_err_t TCA9535::NewI2cHandle(i2c_port_num_t i2c_port,
-                                gpio_num_t sda,
-                                gpio_num_t scl,
-                                uint16_t dev_addr,
-                                i2c_master_dev_handle_t* dev_handle) {
-    i2c_master_bus_config_t i2c_mst_config = {};
-    i2c_mst_config.clk_source = I2C_CLK_SRC_DEFAULT;
-    i2c_mst_config.i2c_port = i2c_port;
-    i2c_mst_config.scl_io_num = scl;
-    i2c_mst_config.sda_io_num = sda;
-    i2c_mst_config.glitch_ignore_cnt = 7;
-    i2c_mst_config.flags.enable_internal_pullup = false;
-
-    i2c_master_bus_handle_t bus_handle;
-    esp_err_t err = i2c_new_master_bus(&i2c_mst_config, &bus_handle);
-    if (err != ESP_OK) {
-        return err;
-    }
-
+TCA9535::TCA9535(i2c_master_bus_handle_t bus_handle, uint16_t dev_addr) {
     i2c_device_config_t dev_cfg = {};
     dev_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
     dev_cfg.device_address = dev_addr;
     dev_cfg.scl_speed_hz = 100000;
-
-    return i2c_master_bus_add_device(bus_handle, &dev_cfg, dev_handle);
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &dev_cfg, &handle_));
+    value_ = 0;
 }
 
 esp_err_t TCA9535::SetDirection(uint16_t direction) {
