@@ -1,0 +1,9 @@
+version: 0.1.0
+description: TCA9535 I2C GPIO expander component for ESP-IDF
+maintainers:
+  - Jacques Supcik <jacques@supcik.net>
+url: https://github.com/supcik/idf-tca9535/tree/main/tca9535
+repository: https://github.com/supcik/idf-tca9535.git
+license: MIT
+dependencies:
+  idf: ">=5.4"
