@@ -28,19 +28,31 @@ TCA9535::TCA9535(i2c_master_bus_handle_t bus_handle, uint16_t dev_addr) {
     dev_cfg.device_address = dev_addr;
     dev_cfg.scl_speed_hz = 100000;
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &dev_cfg, &handle_));
-    value_ = 0;
+    output_reg_ = 0x0ff;        // According to datasheet
+    polarity_inv_reg_ = 0x000;  // According to datasheet
+    direction_reg_ = 0x0ff;     // According to datasheet
 }
 
 esp_err_t TCA9535::SetDirection(uint16_t direction) {
     ESP_LOGD(kTag, "Setting direction: 0x%04X", direction);
+    direction_reg_ = direction;
     uint8_t buffer[3];
     buffer[0] = 0x06;                     // Register for setting direction
     buffer[1] = (direction >> 8) & 0xFF;  // High byte
     buffer[2] = direction & 0xFF;         // Low byte
     return i2c_master_transmit(this->handle_, buffer, 3, kI2CtimeoutMs);
 }
+
+void TCA9535::SetPinsAsOutput(uint16_t mask) {
+    ESP_ERROR_CHECK(SetDirection(direction_reg_ & ~(mask)));
+}
+void TCA9535::SetPinsAsInput(uint16_t mask) {
+    ESP_ERROR_CHECK(SetDirection(direction_reg_ | mask));
+}
+
 esp_err_t TCA9535::SetPolarityInversion(uint16_t polarity) {
     ESP_LOGD(kTag, "Setting polarity inversion: 0x%04X", polarity);
+    polarity_inv_reg_ = polarity;
     uint8_t buffer[3];
     buffer[0] = 0x04;                    // Register for setting polarity inversion
     buffer[1] = (polarity >> 8) & 0xFF;  // High byte
@@ -48,9 +60,17 @@ esp_err_t TCA9535::SetPolarityInversion(uint16_t polarity) {
     return i2c_master_transmit(this->handle_, buffer, 3, kI2CtimeoutMs);
 }
 
-esp_err_t TCA9535::SetLevel(uint16_t level) {
+void TCA9535::SetPinsPolarityNormal(uint16_t mask) {
+    ESP_ERROR_CHECK(SetPolarityInversion(polarity_inv_reg_ & ~(mask)));
+}
+
+void TCA9535::SetPinsPolarityInverse(uint16_t mask) {
+    ESP_ERROR_CHECK(SetPolarityInversion(polarity_inv_reg_ | mask));
+}
+
+esp_err_t TCA9535::SetOutputRegister(uint16_t level) {
     ESP_LOGD(kTag, "Setting level: 0x%04X", level);
-    value_ = level;  // Store the level for later use
+    output_reg_ = level;
     uint8_t buffer[3];
     buffer[0] = 0x02;                 // Register for setting output value
     buffer[1] = (level >> 8) & 0xFF;  // High byte
@@ -58,7 +78,31 @@ esp_err_t TCA9535::SetLevel(uint16_t level) {
     return i2c_master_transmit(this->handle_, buffer, 3, kI2CtimeoutMs);
 }
 
-esp_err_t TCA9535::GetLevel(uint16_t* level) {
+void TCA9535::SetOutputPins(uint16_t mask) {
+    ESP_ERROR_CHECK(SetOutputRegister(output_reg_ | mask));  // Update the level
+}
+
+void TCA9535::ClearOutputPins(uint16_t mask) {
+    ESP_ERROR_CHECK(SetOutputRegister(output_reg_ & ~mask));  // Update the level
+}
+
+void TCA9535::SetOutputPinHigh(int pin) {
+    ESP_ERROR_CHECK(SetOutputRegister(output_reg_ | (1 << pin)));  // Update the level
+}
+
+void TCA9535::SetOutputPinLow(int pin) {
+    ESP_ERROR_CHECK(SetOutputRegister(output_reg_ & ~(1 << pin)));  // Update the level
+}
+
+void TCA9535::SetOutputPinValue(int pin, bool value) {
+    if (value) {
+        SetOutputPinHigh(pin);  // Set pin high
+    } else {
+        SetOutputPinLow(pin);  // Set pin low
+    }
+}
+
+esp_err_t TCA9535::GetInputRegister(uint16_t* level) {
     ESP_LOGD(kTag, "Getting level");
     uint8_t tx_buffer[1];
     uint8_t rx_buffer[2];
@@ -73,16 +117,23 @@ esp_err_t TCA9535::GetLevel(uint16_t* level) {
     return ESP_OK;
 }
 
-void TCA9535::SetBit(uint16_t value) {
-    ESP_ERROR_CHECK(SetLevel(value_ | value));  // Update the level
-}
-
-void TCA9535::ClearBit(uint16_t value) {
-    ESP_ERROR_CHECK(SetLevel(value_ & ~value));  // Update the level
-}
-
-uint16_t TCA9535::GetValue() {
+uint16_t TCA9535::GetInputValue() {
     uint16_t level;
-    ESP_ERROR_CHECK(GetLevel(&level));
+    ESP_ERROR_CHECK(GetInputRegister(&level));
     return level;  // Return the current level
+}
+
+bool TCA9535::PinValue(int pin) {
+    uint16_t level = GetInputValue();
+    return (level & (1 << pin)) != 0;  // Check if the pin is high
+}
+
+bool TCA9535::IsPinHigh(int pin) {
+    uint16_t level = GetInputValue();
+    return (level & (1 << pin)) != 0;  // Check if the pin is high
+}
+
+bool TCA9535::IsPinLow(int pin) {
+    uint16_t level = GetInputValue();
+    return (level & (1 << pin)) == 0;  // Check if the pin is low
 }

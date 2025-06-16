@@ -50,7 +50,7 @@ void app_main(void) {
 
     uint16_t level;
     while (1) {
-        ESP_ERROR_CHECK(tca9535.GetLevel(&level));
+        ESP_ERROR_CHECK(tca9535.GetInputRegister(&level));
         ESP_LOGI(kTag, "Current level: 0x%04X", level);
         vTaskDelay(pdMS_TO_TICKS(100));
     }

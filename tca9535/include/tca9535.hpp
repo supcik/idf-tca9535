@@ -22,16 +22,30 @@ class TCA9535 {
     TCA9535(i2c_master_bus_handle_t bus_handle, uint16_t dev_addr);
 
     esp_err_t SetDirection(uint16_t direction);
+    void SetPinsAsOutput(uint16_t mask);
+    void SetPinsAsInput(uint16_t mask);
+
     esp_err_t SetPolarityInversion(uint16_t polarity);
+    void SetPinsPolarityNormal(uint16_t mask);
+    void SetPinsPolarityInverse(uint16_t mask);
 
-    esp_err_t SetLevel(uint16_t level);
-    esp_err_t GetLevel(uint16_t* level);
+    esp_err_t SetOutputRegister(uint16_t level);
+    void SetOutputPins(uint16_t mask);
+    void ClearOutputPins(uint16_t mask);
+    void SetOutputPinHigh(int pin);
+    void SetOutputPinLow(int pin);
+    void SetOutputPinValue(int pin, bool value);
 
-    void SetBit(uint16_t value);
-    void ClearBit(uint16_t value);
-    uint16_t GetValue();
+    esp_err_t GetInputRegister(uint16_t* level);
+    uint16_t GetInputValue();
+
+    bool PinValue(int pin);
+    bool IsPinHigh(int pin);
+    bool IsPinLow(int pin);
 
    private:
     i2c_master_dev_handle_t handle_;
-    uint16_t value_;
+    uint16_t output_reg_ = 0x0ff;        // According to datasheet
+    uint16_t polarity_inv_reg_ = 0x000;  // According to datasheet
+    uint16_t direction_reg_ = 0x0ff;     // According to datasheet
 };
