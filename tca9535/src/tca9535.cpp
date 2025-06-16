@@ -28,9 +28,9 @@ TCA9535::TCA9535(i2c_master_bus_handle_t bus_handle, uint16_t dev_addr) {
     dev_cfg.device_address = dev_addr;
     dev_cfg.scl_speed_hz = 100000;
     ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &dev_cfg, &handle_));
-    output_reg_ = 0x0ff;        // According to datasheet
-    polarity_inv_reg_ = 0x000;  // According to datasheet
-    direction_reg_ = 0x0ff;     // According to datasheet
+    output_reg_ = 0xffff;        // According to datasheet
+    polarity_inv_reg_ = 0x0000;  // According to datasheet
+    direction_reg_ = 0xffff;     // According to datasheet
 }
 
 esp_err_t TCA9535::SetDirection(uint16_t direction) {
@@ -38,8 +38,8 @@ esp_err_t TCA9535::SetDirection(uint16_t direction) {
     direction_reg_ = direction;
     uint8_t buffer[3];
     buffer[0] = 0x06;                     // Register for setting direction
-    buffer[1] = (direction >> 8) & 0xFF;  // High byte
-    buffer[2] = direction & 0xFF;         // Low byte
+    buffer[1] = direction & 0xFF;         // Low byte
+    buffer[2] = (direction >> 8) & 0xFF;  // High byte
     return i2c_master_transmit(this->handle_, buffer, 3, kI2CtimeoutMs);
 }
 
@@ -55,8 +55,8 @@ esp_err_t TCA9535::SetPolarityInversion(uint16_t polarity) {
     polarity_inv_reg_ = polarity;
     uint8_t buffer[3];
     buffer[0] = 0x04;                    // Register for setting polarity inversion
-    buffer[1] = (polarity >> 8) & 0xFF;  // High byte
-    buffer[2] = polarity & 0xFF;         // Low byte
+    buffer[1] = polarity & 0xFF;         // Low byte
+    buffer[2] = (polarity >> 8) & 0xFF;  // High byte
     return i2c_master_transmit(this->handle_, buffer, 3, kI2CtimeoutMs);
 }
 
@@ -73,8 +73,8 @@ esp_err_t TCA9535::SetOutputRegister(uint16_t level) {
     output_reg_ = level;
     uint8_t buffer[3];
     buffer[0] = 0x02;                 // Register for setting output value
-    buffer[1] = (level >> 8) & 0xFF;  // High byte
-    buffer[2] = level & 0xFF;         // Low byte
+    buffer[1] = level & 0xFF;         // Low byte
+    buffer[2] = (level >> 8) & 0xFF;  // High byte
     return i2c_master_transmit(this->handle_, buffer, 3, kI2CtimeoutMs);
 }
 
@@ -112,7 +112,7 @@ esp_err_t TCA9535::GetInputRegister(uint16_t* level) {
     if (err != ESP_OK) {
         return err;
     }
-    *level = (rx_buffer[0] << 8) | rx_buffer[1];  // Combine high and low bytes
+    *level = (rx_buffer[1] << 8) | rx_buffer[0];  // Combine high and low bytes
     ESP_LOGD(kTag, "Read level: 0x%04X", *level);
     return ESP_OK;
 }

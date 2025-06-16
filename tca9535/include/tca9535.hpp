@@ -45,7 +45,7 @@ class TCA9535 {
 
    private:
     i2c_master_dev_handle_t handle_;
-    uint16_t output_reg_ = 0x0ff;        // According to datasheet
-    uint16_t polarity_inv_reg_ = 0x000;  // According to datasheet
-    uint16_t direction_reg_ = 0x0ff;     // According to datasheet
+    uint16_t output_reg_;
+    uint16_t polarity_inv_reg_;
+    uint16_t direction_reg_;
 };
